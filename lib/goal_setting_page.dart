@@ -24,10 +24,11 @@ class GoalSettingPage extends ConsumerWidget {
             onChanged: (value) {
               if (value != null) {
                 ref.read(selectionProvider.notifier).setGoal(value);
-                Navigator.push(
+                Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => const CommunityRecommendationPage()));
+                        builder: (_) => const CommunityRecommendationPage()),
+                    (route) => false);
               }
             },
           ),

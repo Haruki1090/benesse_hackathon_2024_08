@@ -75,26 +75,6 @@ class CommunityHomePage extends StatelessWidget {
       body: const Center(
         child: Text('Welcome to your Community!'),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.share),
-            label: 'Knowledge Share',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Study Record',
-          ),
-        ],
-        onTap: (index) {
-          // BottomNavigationBarのインデックスに基づいて画面を切り替える
-          // 各機能の画面は後ほど具体的に実装
-        },
-      ),
     );
   }
 }
