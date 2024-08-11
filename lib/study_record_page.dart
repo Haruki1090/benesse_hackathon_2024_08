@@ -2,7 +2,6 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class StudyRecordPage extends StatefulWidget {
@@ -278,10 +277,10 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
           .get()
           .then((doc) => doc.data()?['purpose']);
 
-      if (kDebugMode) {
-        print(community);
-        print(purpose);
-      }
+      // if (kDebugMode) {
+      //   print(community);
+      //   print(purpose);
+      // }
 
       // コミュニティのストリームに記録を保存
       final streamRecord = FirebaseFirestore.instance
@@ -289,14 +288,20 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
           .doc(purpose)
           .collection('community_list')
           .doc(community)
-          .collection('stream_streams')
+          .collection('study_streams')
           .doc(_selectedGenre)
           .collection('posts')
           .doc();
 
+      final name = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .then((doc) => doc.data()?['name']);
+
       await streamRecord.set({
         'user_id': user.uid,
-        'user_name': user.displayName,
+        'user_name': name,
         'content': _contentController.text,
         'focus_level': _focusLevel,
         'timestamp': Timestamp.now(),
