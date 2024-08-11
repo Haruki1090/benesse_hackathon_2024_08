@@ -2,6 +2,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class StudyRecordPage extends StatefulWidget {
@@ -276,6 +277,11 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
           .doc(user.uid)
           .get()
           .then((doc) => doc.data()?['purpose']);
+
+      if (kDebugMode) {
+        print(community);
+        print(purpose);
+      }
 
       // コミュニティのストリームに記録を保存
       final streamRecord = FirebaseFirestore.instance
