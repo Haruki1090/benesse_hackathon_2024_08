@@ -18,19 +18,25 @@ class PurposeSelectionPage extends ConsumerWidget {
             title: const Text('TOEIC'),
             onTap: () {
               ref.read(selectionProvider.notifier).setPurpose('TOEIC');
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const GoalSettingPage()));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const GoalSettingPage(
+                          communities: ['とりあえず一週間頑張ろう', '1ヶ月ガッツリ'])));
             },
           ),
           ListTile(
             title: const Text('日商簿記検定'),
             onTap: () {
               ref.read(selectionProvider.notifier).setPurpose('日商簿記検定');
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const GoalSettingPage()));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const GoalSettingPage(
+                          communities: ['とりあえず一週間頑張ろう', '1ヶ月ガッツリ'])));
             },
           ),
-          // todo:他の目標を追加
+          // 他の目標を追加
         ],
       ),
     );
