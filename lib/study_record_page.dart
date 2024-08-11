@@ -280,6 +280,7 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
           .collection('posts')
           .doc();
 
+      // ユーザー名を取得
       final userName = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -292,6 +293,7 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
         'content': _contentController.text,
         'focus_level': _focusLevel,
         'timestamp': Timestamp.now(),
+        'likes': 0, // いいねの初期値を0に設定
       });
     }
   }
