@@ -1,11 +1,10 @@
-// ignore_for_file: use_build_context_synchronously
-
-import 'package:benesse_hackathon_2024_08/home_page.dart';
-import 'package:benesse_hackathon_2024_08/selection_state.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'home_page.dart';
+import 'selection_state.dart';
 
 class CommunityRecommendationPage extends ConsumerWidget {
   const CommunityRecommendationPage({super.key});
@@ -25,7 +24,7 @@ class CommunityRecommendationPage extends ConsumerWidget {
             subtitle: const Text('TOEIC対策用のコミュニティー'),
             onTap: () {
               ref.read(selectionProvider.notifier).setCommunity('とりあえず一週間頑張ろう');
-              _confirmAndSave(context, ref);
+              _confirmAndSave(context, ref, 'とりあえず一週間頑張ろう');
             },
           ),
           ListTile(
@@ -33,7 +32,7 @@ class CommunityRecommendationPage extends ConsumerWidget {
             subtitle: const Text('日商簿記検定対策用のコミュニティー'),
             onTap: () {
               ref.read(selectionProvider.notifier).setCommunity('1ヶ月ガッツリ');
-              _confirmAndSave(context, ref);
+              _confirmAndSave(context, ref, '1ヶ月ガッツリ');
             },
           ),
           // 他のコミュニティーを追加
@@ -42,7 +41,8 @@ class CommunityRecommendationPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmAndSave(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmAndSave(
+      BuildContext context, WidgetRef ref, String communityId) async {
     final selectionState = ref.read(selectionProvider);
 
     showDialog(
@@ -56,7 +56,8 @@ class CommunityRecommendationPage extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(context); // ダイアログを閉じる
-              await _saveToFirestore(selectionState);
+              await _saveToFirestoreAndJoinCommunity(
+                  selectionState, communityId);
               Navigator.pushReplacement(
                   context, MaterialPageRoute(builder: (_) => const HomePage()));
             },
@@ -73,17 +74,39 @@ class CommunityRecommendationPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _saveToFirestore(SelectionState selectionState) async {
+  Future<void> _saveToFirestoreAndJoinCommunity(
+      SelectionState selectionState, String communityId) async {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .update({
+      final userDoc =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+      // ユーザーの目的、目標、選択されたコミュニティーをFirestoreに保存
+      await userDoc.update({
         'purpose': selectionState.purpose,
         'goal': selectionState.goal,
         'community': selectionState.community,
+      });
+
+      // コミュニティーにユーザーを追加する処理
+      final communityDoc =
+          FirebaseFirestore.instance.collection('communities').doc(communityId);
+      final userData = await userDoc.get();
+
+      await communityDoc.collection('members').doc(user.uid).set({
+        'user_id': user.uid,
+        'joined_at': Timestamp.now(),
+        'last_active': Timestamp.now(),
+        'role': 'member', // メンバーとして追加
+        'name': userData['name'],
+        'email': userData['email'],
+        // 必要な他のフィールドも追加
+      });
+
+      // ユーザードキュメントに参加したコミュニティーIDを追加
+      await userDoc.update({
+        'joined_communities': FieldValue.arrayUnion([communityId]),
       });
     }
   }
