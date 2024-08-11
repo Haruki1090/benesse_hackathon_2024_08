@@ -4,35 +4,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GoalSettingPage extends ConsumerWidget {
-  const GoalSettingPage({Key? key}) : super(key: key);
+  final List<String> communities;
+  const GoalSettingPage({super.key, required this.communities});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Set Your Final Goal'),
+        title: const Text('目標を設定しよう'),
       ),
       body: Column(
         children: [
-          DropdownButton<String>(
-            items: const [
-              DropdownMenuItem(value: '1 Month', child: Text('〜1ヶ月')),
-              DropdownMenuItem(value: '3 Months', child: Text('〜3ヶ月')),
-              DropdownMenuItem(value: '6 Months', child: Text('〜6ヶ月')),
-              DropdownMenuItem(value: '1 Year', child: Text('〜1年')),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                ref.read(selectionProvider.notifier).setGoal(value);
-                Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const CommunityRecommendationPage()),
-                    (route) => false);
-              }
+          ListTile(
+            title: const Text('3ヶ月以内'),
+            onTap: () {
+              ref.read(selectionProvider.notifier).setGoal('3 Months');
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => CommunityRecommendationPage(
+                          communities: communities)));
             },
           ),
-          // 適切な選択肢を追加
+          ListTile(
+            title: const Text('6ヶ月以内'),
+            onTap: () {
+              ref.read(selectionProvider.notifier).setGoal('6 Months');
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => CommunityRecommendationPage(
+                          communities: communities)));
+            },
+          ),
+          // 他のゴールを追加
         ],
       ),
     );
