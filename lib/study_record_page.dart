@@ -83,41 +83,85 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
   }
 
   Widget _buildAverageFocusLevel() {
-    // Firestoreからデータを取得し、集中度の平均を計算
-    // サンプル表示
-    return const Card(
-      child: ListTile(
-        title: Text('平均集中度'),
-        subtitle: Text('4.5/5'),
-      ),
-    );
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      return StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('study_records')
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final records = snapshot.data!.docs;
+          double totalFocusLevel = 0;
+
+          for (var record in records) {
+            final focusLevel = record['focus_level'] ?? 0;
+            totalFocusLevel += focusLevel;
+          }
+
+          final averageFocusLevel = totalFocusLevel / records.length;
+
+          return Card(
+            child: ListTile(
+              title: const Text('集中度の平均'),
+              subtitle: Text(averageFocusLevel.toStringAsFixed(1)),
+            ),
+          );
+        },
+      );
+    } else {
+      return const Center(child: Text('ログインが必要です'));
+    }
   }
 
   Widget _buildStudyTimeByGenre() {
-    // Firestoreからジャンル別の勉強時間を取得
-    // サンプル表示
-    return const Card(
-      child: Column(
-        children: [
-          ListTile(
-            title: Text('単語'),
-            trailing: Text('20時間'),
-          ),
-          ListTile(
-            title: Text('文法'),
-            trailing: Text('15時間'),
-          ),
-          ListTile(
-            title: Text('英文解釈'),
-            trailing: Text('10時間'),
-          ),
-          ListTile(
-            title: Text('過去問'),
-            trailing: Text('5時間'),
-          ),
-        ],
-      ),
-    );
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      return StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('study_records')
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final records = snapshot.data!.docs;
+          final studyTimeByGenre = <String, int>{};
+
+          for (var record in records) {
+            final genre = record['genre'] ?? 'その他';
+            final studyTime = int.tryParse(record['study_time'] ?? '0') ?? 0;
+
+            if (studyTimeByGenre.containsKey(genre)) {
+              studyTimeByGenre[genre] = studyTimeByGenre[genre]! + studyTime;
+            } else {
+              studyTimeByGenre[genre] = studyTime;
+            }
+          }
+
+          return Card(
+            child: Column(
+              children: studyTimeByGenre.entries
+                  .map((entry) => ListTile(
+                        title: Text(entry.key),
+                        subtitle: Text('${entry.value} 時間'),
+                      ))
+                  .toList(),
+            ),
+          );
+        },
+      );
+    } else {
+      return const Center(child: Text('ログインが必要です'));
+    }
   }
 
   void _showStudyRecordDialog(BuildContext context) {
