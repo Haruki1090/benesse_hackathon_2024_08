@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class StudyRecordDetailPage extends StatelessWidget {
   final String genre;
@@ -10,9 +11,6 @@ class StudyRecordDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // if (kDebugMode) {
-    //   print('genre: $genre, userId: $userId');
-    // }
     return Scaffold(
       appBar: AppBar(
         title: Text('$genre の記録'),
@@ -40,12 +38,52 @@ class StudyRecordDetailPage extends StatelessWidget {
             itemCount: records.length,
             itemBuilder: (context, index) {
               final record = records[index];
-              return ListTile(
-                title: Text('勉強内容: ${record['content']}'),
-                subtitle: Text(
-                    '勉強時間: ${record['study_time']} 分\n集中度: ${record['focus_level']}/5'),
-                trailing: Text(
-                  '日時: ${(record['timestamp'] as Timestamp).toDate().toString()}',
+              final timestamp = (record['timestamp'] as Timestamp).toDate();
+              final formattedDate =
+                  DateFormat('yyyy年MM月dd日 HH:mm').format(timestamp);
+
+              return Card(
+                margin:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        record['content'] ?? 'No content',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8.0),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '勉強時間: ${record['study_time']} 分',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          Text(
+                            '集中度: ${record['focus_level']}/5',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.black,
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8.0),
+                      Text(
+                        '日時: $formattedDate',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: Colors.grey),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
