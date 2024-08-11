@@ -247,11 +247,12 @@ class _SignUpPageState extends State<SignUpPage> {
                               });
 
                               // 書き込みが完了したらPurposeSelectionPageに遷移
-                              Navigator.of(context).pushReplacement(
+                              Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const PurposeSelectionPage(),
                                 ),
+                                (route) => false,
                               );
                             } catch (e) {
                               if (kDebugMode) {
@@ -273,7 +274,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             color: Colors.white,
                           )
                         : const Text(
-                            'Sign Up',
+                            '情報を登録',
                             style: TextStyle(fontSize: 18),
                           ),
                   ),
