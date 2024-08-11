@@ -48,14 +48,38 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
   }
 
   Widget _buildTotalStudyTime() {
-    // Firestoreからデータを取得し、総勉強時間を計算
-    // サンプル表示
-    return const Card(
-      child: ListTile(
-        title: Text('総勉強時間'),
-        subtitle: Text('50時間'),
-      ),
-    );
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      return StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('study_records')
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final records = snapshot.data!.docs;
+          int totalStudyTime = 0;
+
+          for (var record in records) {
+            final studyTime = int.tryParse(record['study_time'] ?? '0') ?? 0;
+            totalStudyTime += studyTime;
+          }
+
+          return Card(
+            child: ListTile(
+              title: const Text('総勉強時間'),
+              subtitle: Text('$totalStudyTime 時間'),
+            ),
+          );
+        },
+      );
+    } else {
+      return const Center(child: Text('ログインが必要です'));
+    }
   }
 
   Widget _buildAverageFocusLevel() {
