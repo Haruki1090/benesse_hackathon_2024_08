@@ -244,6 +244,7 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
     );
   }
 
+  // 勉強記録を保存
   Future<void> _saveStudyRecord() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -263,16 +264,26 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
       });
 
       // 該当するストリームに記録を反映
+      // ユーザーのコミュニティ名を取得
       final community = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get()
           .then((doc) => doc.data()?['community']);
+      // ユーザーの目的を取得
+      final purpose = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .then((doc) => doc.data()?['purpose']);
 
+      // コミュニティのストリームに記録を保存
       final streamRecord = FirebaseFirestore.instance
           .collection('communities')
+          .doc(purpose)
+          .collection('community_list')
           .doc(community)
-          .collection('study_streams')
+          .collection('stream_streams')
           .doc(_selectedGenre)
           .collection('posts')
           .doc();
