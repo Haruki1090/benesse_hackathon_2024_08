@@ -120,7 +120,35 @@ class CommunityHomePage extends StatelessWidget {
           const Divider(thickness: 2),
           // スタディストリーム
           Expanded(
-            child: _buildStudyStream(),
+            child: ListView(
+              padding: const EdgeInsets.all(8.0),
+              children: [
+                _buildStreamCard(
+                  context,
+                  '単語ストリーム',
+                  '最後の投稿: ユーザーA',
+                  'word_stream',
+                ),
+                _buildStreamCard(
+                  context,
+                  '文法ストリーム',
+                  '最後の投稿: ユーザーB',
+                  'grammar_stream',
+                ),
+                _buildStreamCard(
+                  context,
+                  '英文解釈ストリーム',
+                  '最後の投稿: ユーザーC',
+                  'interpretation_stream',
+                ),
+                _buildStreamCard(
+                  context,
+                  '過去問ストリーム',
+                  '最後の投稿: ユーザーD',
+                  'past_question_stream',
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -147,22 +175,55 @@ class CommunityHomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildStudyStream() {
-    // スタディストリームを表示するためのコードを実装
-    return ListView.builder(
-      itemCount: 20, // 投稿の数に応じて変更
-      itemBuilder: (context, index) {
-        return ListTile(
-          leading: const CircleAvatar(
-            child: Icon(Icons.book),
-          ),
-          title: Text('勉強内容 $index'),
-          subtitle: const Text('単語: 20分、集中度: 4/5'),
-          onTap: () {
-            // 投稿詳細ページに遷移
-          },
-        );
-      },
+  Widget _buildStreamCard(BuildContext context, String streamName,
+      String lastPostedUser, String streamId) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ListTile(
+        title: Text(streamName),
+        subtitle: Text(lastPostedUser),
+        trailing: const Icon(Icons.arrow_forward),
+        onTap: () {
+          // 各ストリームのタイムラインページに遷移
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StreamTimelinePage(
+                  streamName: streamName, streamId: streamId),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class StreamTimelinePage extends StatelessWidget {
+  final String streamName;
+  final String streamId;
+
+  const StreamTimelinePage(
+      {super.key, required this.streamName, required this.streamId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(streamName),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: 20, // 仮の投稿数
+        itemBuilder: (context, index) {
+          return ListTile(
+            leading: const CircleAvatar(
+              child: Icon(Icons.person),
+            ),
+            title: Text('ユーザー $index'),
+            subtitle: const Text('投稿内容の詳細がここに表示されます'),
+          );
+        },
+      ),
     );
   }
 }
