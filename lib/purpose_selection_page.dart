@@ -10,7 +10,7 @@ class PurposeSelectionPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Set Your Purpose'),
+        title: const Text('何を勉強する？'),
       ),
       body: ListView(
         children: [
@@ -30,7 +30,7 @@ class PurposeSelectionPage extends ConsumerWidget {
                   MaterialPageRoute(builder: (_) => const GoalSettingPage()));
             },
           ),
-          // 他の目的もリストアップ
+          // todo:他の目標を追加
         ],
       ),
     );
