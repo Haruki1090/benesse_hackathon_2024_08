@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:benesse_hackathon_2024_08/auth_gate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -61,7 +62,10 @@ class CommunityHomePage extends StatelessWidget {
                         title: const Text('Logout'),
                         onTap: () async {
                           await FirebaseAuth.instance.signOut();
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (_) => const AuthGate()),
+                              (route) => false);
                         },
                       ),
                     ],
