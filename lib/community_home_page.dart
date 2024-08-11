@@ -4,6 +4,7 @@ import 'package:benesse_hackathon_2024_08/auth_gate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class CommunityHomePage extends StatelessWidget {
   const CommunityHomePage({super.key});
@@ -341,18 +342,168 @@ class StreamTimelinePage extends StatelessWidget {
             itemCount: posts.length,
             itemBuilder: (context, index) {
               final post = posts[index];
-              return ListTile(
-                leading: const CircleAvatar(
-                  child: Icon(Icons.person),
+              return Card(
+                margin:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    child: Icon(Icons.person),
+                  ),
+                  title: Text(post['user_name'] ?? '匿名'),
+                  subtitle: Text(post['content']),
+                  trailing: Text('集中度: ${post['focus_level']}/5'),
+                  onTap: () {
+                    _showPostDetails(context, post.id, post);
+                  },
                 ),
-                title: Text(post['user_name'] ?? '匿名'),
-                subtitle: Text(post['content']),
-                trailing: Text('集中度: ${post['focus_level']}/5'),
               );
             },
           );
         },
       ),
+    );
+  }
+
+  void _showPostDetails(
+      BuildContext context, String postId, DocumentSnapshot post) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.thumb_up),
+              title: Text('いいね (${post['likes'] ?? 0})'),
+              onTap: () async {
+                // いいねのカウントを増やす処理
+                final postRef = FirebaseFirestore.instance
+                    .collection('communities')
+                    .doc(purpose)
+                    .collection('community_list')
+                    .doc(community)
+                    .collection('study_streams')
+                    .doc(streamName)
+                    .collection('posts')
+                    .doc(postId);
+
+                await postRef.update({
+                  'likes': FieldValue.increment(1),
+                });
+
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.comment),
+              title: const Text('コメントを追加'),
+              onTap: () {
+                Navigator.pop(context);
+                _showAddCommentDialog(context, postId);
+              },
+            ),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('communities')
+                    .doc(purpose)
+                    .collection('community_list')
+                    .doc(community)
+                    .collection('study_streams')
+                    .doc(streamName)
+                    .collection('posts')
+                    .doc(postId)
+                    .collection('comments')
+                    .orderBy('timestamp', descending: true)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final comments = snapshot.data!.docs;
+
+                  return ListView.builder(
+                    itemCount: comments.length,
+                    itemBuilder: (context, index) {
+                      final comment = comments[index];
+                      return ListTile(
+                        title: Text(comment['user_name'] ?? '匿名'),
+                        subtitle: Text(comment['comment']),
+                        trailing: Text(
+                          DateFormat('yyyy年MM月dd日 HH:mm').format(
+                            (comment['timestamp'] as Timestamp).toDate(),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAddCommentDialog(BuildContext context, String postId) {
+    final TextEditingController commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('コメントを追加'),
+          content: TextField(
+            controller: commentController,
+            decoration: const InputDecoration(labelText: 'コメント'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('キャンセル'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final user = FirebaseAuth.instance.currentUser;
+
+                // ユーザー名を取得
+                final userName = await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user?.uid)
+                    .get()
+                    .then((doc) => doc.data()?['name']);
+
+                if (user != null) {
+                  final commentRef = FirebaseFirestore.instance
+                      .collection('communities')
+                      .doc(purpose)
+                      .collection('community_list')
+                      .doc(community)
+                      .collection('study_streams')
+                      .doc(streamName)
+                      .collection('posts')
+                      .doc(postId)
+                      .collection('comments')
+                      .doc();
+
+                  await commentRef.set({
+                    'user_id': user.uid,
+                    'user_name': userName,
+                    'comment': commentController.text,
+                    'timestamp': Timestamp.now(),
+                  });
+                }
+                Navigator.pop(context);
+              },
+              child: const Text('追加'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
