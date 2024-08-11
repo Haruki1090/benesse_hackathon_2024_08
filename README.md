@@ -1,17 +1,11 @@
 # benesse_hackathon_2024_08
 
-A new Flutter project.
+自己管理を他に任せるコミュニティー協力型サービス（Uni-Com）
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# benesse_hackathon_2024_08
+# Firebaseセットアップ
+```
+firebase login
+```
+```
+flutterfire configure --project=benesse-hackathon-202408
+```
