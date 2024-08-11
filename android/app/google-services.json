@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "101760414342",
+    "project_id": "benesse-hackathon-2024-08",
+    "storage_bucket": "benesse-hackathon-2024-08.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:101760414342:android:f95c3f5fceb6f063df9707",
+        "android_client_info": {
+          "package_name": "com.example.benesse_hackathon_2024_08"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDRZKZm0JMB12wjpV3UxODScA4gLNNmdg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
