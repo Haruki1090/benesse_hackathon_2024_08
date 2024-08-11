@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
 
 import 'package:benesse_hackathon_2024_08/home_page.dart';
+import 'package:benesse_hackathon_2024_08/purpose_selection_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -90,6 +91,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -97,113 +99,140 @@ class _SignUpPageState extends State<SignUpPage> {
       appBar: AppBar(
         title: const Text('アカウント登録'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: passwordController,
-              decoration: InputDecoration(
-                labelText: 'パスワード',
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                TextField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
                 ),
-              ),
-              obscureText: _obscurePassword,
-            ),
-            TextField(
-              controller: confirmPasswordController,
-              decoration: InputDecoration(
-                labelText: 'パスワード確認',
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureConfirmPassword
-                        ? Icons.visibility
-                        : Icons.visibility_off,
+                TextField(
+                  controller: passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'パスワード',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureConfirmPassword = !_obscureConfirmPassword;
-                    });
-                  },
+                  obscureText: _obscurePassword,
                 ),
-              ),
-              obscureText: _obscureConfirmPassword,
-            ),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'ユーザー名'),
-            ),
-            TextField(
-              controller: universityController,
-              decoration: const InputDecoration(labelText: '大学'),
-            ),
-            TextField(
-              controller: facultyController,
-              decoration: const InputDecoration(labelText: '学部'),
-            ),
-            TextField(
-              controller: gradeController,
-              decoration: const InputDecoration(labelText: '年次'),
-            ),
-            TextField(
-              controller: effortController,
-              decoration: const InputDecoration(labelText: '好きなこと'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (passwordController.text != confirmPasswordController.text) {
-                  // パスワードと確認用パスワードが一致しない場合
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('パスワードが一致しません')),
-                  );
-                  return;
-                }
+                TextField(
+                  controller: confirmPasswordController,
+                  decoration: InputDecoration(
+                    labelText: 'パスワード確認',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                    ),
+                  ),
+                  obscureText: _obscureConfirmPassword,
+                ),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'ユーザー名'),
+                ),
+                TextField(
+                  controller: universityController,
+                  decoration: const InputDecoration(labelText: '大学'),
+                ),
+                TextField(
+                  controller: facultyController,
+                  decoration: const InputDecoration(labelText: '学部'),
+                ),
+                TextField(
+                  controller: gradeController,
+                  decoration: const InputDecoration(labelText: '年次'),
+                ),
+                TextField(
+                  controller: effortController,
+                  decoration: const InputDecoration(labelText: '好きなこと'),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (passwordController.text !=
+                        confirmPasswordController.text) {
+                      // パスワードと確認用パスワードが一致しない場合
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('パスワードが一致しません')),
+                      );
+                      return;
+                    }
 
-                try {
-                  // FirebaseAuthでユーザー作成
-                  final userCredential = await FirebaseAuth.instance
-                      .createUserWithEmailAndPassword(
-                    email: emailController.text,
-                    password: passwordController.text,
-                  );
+                    setState(() {
+                      _isLoading = true; // ローディングを表示
+                    });
 
-                  // Firestoreにユーザー情報を保存
-                  await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(userCredential.user!.uid)
-                      .set({
-                    'email': emailController.text,
-                    'name': nameController.text,
-                    'university': universityController.text,
-                    'faculty': facultyController.text,
-                    'grade': gradeController.text,
-                    'effort': effortController.text,
-                  });
+                    try {
+                      // FirebaseAuthでユーザー作成
+                      final userCredential = await FirebaseAuth.instance
+                          .createUserWithEmailAndPassword(
+                        email: emailController.text,
+                        password: passwordController.text,
+                      );
 
-                  // プロフィール設定ページへ遷移
-                  Navigator.of(context).pop();
-                } catch (e) {
-                  if (kDebugMode) {
-                    print('Error: $e');
-                  }
-                }
-              },
-              child: const Text('Sign Up'),
+                      // Firestoreにユーザー情報を保存
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(userCredential.user!.uid)
+                          .set({
+                        'email': emailController.text,
+                        'name': nameController.text,
+                        'university': universityController.text,
+                        'faculty': facultyController.text,
+                        'grade': gradeController.text,
+                        'effort': effortController.text,
+                      });
+
+                      // 書き込みが完了したらPurposeSelectionPageに遷移
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const PurposeSelectionPage(),
+                        ),
+                      );
+                    } catch (e) {
+                      if (kDebugMode) {
+                        print('Error: $e');
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('エラーが発生しました: $e')),
+                      );
+                    } finally {
+                      setState(() {
+                        _isLoading = false; // ローディングを非表示
+                      });
+                    }
+                  },
+                  child: const Text('Sign Up'),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
+        ],
       ),
     );
   }
