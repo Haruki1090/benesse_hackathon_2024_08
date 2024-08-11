@@ -1,5 +1,6 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
+import 'package:benesse_hackathon_2024_08/study_record_detail_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,14 +9,14 @@ class StudyRecordPage extends StatefulWidget {
   const StudyRecordPage({super.key});
 
   @override
-  State<StudyRecordPage> createState() => _StudyRecordPageState();
+  _StudyRecordPageState createState() => _StudyRecordPageState();
 }
 
 class _StudyRecordPageState extends State<StudyRecordPage> {
   final TextEditingController _contentController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
   String _selectedGenre = '単語';
   int _focusLevel = 3;
+  int _studyTimeInMinutes = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -27,20 +28,29 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // 総勉強時間の表示
             _buildTotalStudyTime(),
             const SizedBox(height: 20),
-            // 集中度の平均の表示
             _buildAverageFocusLevel(),
             const SizedBox(height: 20),
-            // ジャンル別の勉強時間
             _buildStudyTimeByGenre(),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showStudyRecordDialog(context);
+        onPressed: () async {
+          // タイムピッカーを表示して、勉強時間を「分」単位で選択
+          final timeOfDay = await showTimePicker(
+            context: context,
+            initialTime: const TimeOfDay(hour: 0, minute: 0),
+          );
+
+          if (timeOfDay != null) {
+            setState(() {
+              _studyTimeInMinutes = timeOfDay.hour * 60 + timeOfDay.minute;
+            });
+
+            _showStudyRecordDialog(context);
+          }
         },
         child: const Icon(Icons.add),
       ),
@@ -72,7 +82,8 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
           return Card(
             child: ListTile(
               title: const Text('総勉強時間'),
-              subtitle: Text('$totalStudyTime 時間'),
+              subtitle:
+                  Text('${totalStudyTime ~/ 60} 時間 ${totalStudyTime % 60} 分'),
             ),
           );
         },
@@ -83,44 +94,17 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
   }
 
   Widget _buildAverageFocusLevel() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      return StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('study_records')
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final records = snapshot.data!.docs;
-          double totalFocusLevel = 0;
-
-          for (var record in records) {
-            final focusLevel = record['focus_level'] ?? 0;
-            totalFocusLevel += focusLevel;
-          }
-
-          final averageFocusLevel = totalFocusLevel / records.length;
-
-          return Card(
-            child: ListTile(
-              title: const Text('集中度の平均'),
-              subtitle: Text(averageFocusLevel.toStringAsFixed(1)),
-            ),
-          );
-        },
-      );
-    } else {
-      return const Center(child: Text('ログインが必要です'));
-    }
+    return const Card(
+      child: ListTile(
+        title: Text('平均集中度'),
+        subtitle: Text('4.5/5'),
+      ),
+    );
   }
 
   Widget _buildStudyTimeByGenre() {
     final user = FirebaseAuth.instance.currentUser;
+
     if (user != null) {
       return StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -134,27 +118,43 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
           }
 
           final records = snapshot.data!.docs;
-          final studyTimeByGenre = <String, int>{};
+          Map<String, int> studyTimeByGenre = {
+            '単語': 0,
+            '文法': 0,
+            '英文解釈': 0,
+            '過去問': 0,
+          };
 
           for (var record in records) {
-            final genre = record['genre'] ?? 'その他';
+            final genre = record['genre'] as String;
             final studyTime = int.tryParse(record['study_time'] ?? '0') ?? 0;
 
             if (studyTimeByGenre.containsKey(genre)) {
               studyTimeByGenre[genre] = studyTimeByGenre[genre]! + studyTime;
-            } else {
-              studyTimeByGenre[genre] = studyTime;
             }
           }
 
           return Card(
             child: Column(
-              children: studyTimeByGenre.entries
-                  .map((entry) => ListTile(
-                        title: Text(entry.key),
-                        subtitle: Text('${entry.value} 時間'),
-                      ))
-                  .toList(),
+              children: studyTimeByGenre.entries.map((entry) {
+                return ListTile(
+                  title: Text(entry.key),
+                  trailing:
+                      Text('${entry.value ~/ 60} 時間 ${entry.value % 60} 分'),
+                  onTap: () {
+                    // タップされたジャンルを使って詳細ページに遷移
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => StudyRecordDetailPage(
+                          genre: entry.key,
+                          userId: user.uid,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
             ),
           );
         },
@@ -165,86 +165,78 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
   }
 
   void _showStudyRecordDialog(BuildContext context) {
-    // 投稿用のダイアログを表示
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('勉強記録を追加'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<String>(
-                    value: '単語',
-                    items: ['単語', '文法', '英文解釈', '過去問']
-                        .map((genre) => DropdownMenuItem(
-                              value: genre,
-                              child: Text(genre),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedGenre = value!;
-                      });
-                    },
-                    decoration: const InputDecoration(labelText: 'ジャンル'),
-                  ),
-                  TextField(
-                    controller: _contentController,
-                    decoration:
-                        const InputDecoration(labelText: 'どんなことを学びましたか？'),
-                    maxLines: 4,
-                  ),
-                  TextField(
-                    controller: _timeController,
-                    decoration: const InputDecoration(labelText: '勉強時間（任意）'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('集中度'),
-                      Slider(
-                        value: _focusLevel.toDouble(),
-                        min: 1,
-                        max: 5,
-                        divisions: 4,
-                        label: '$_focusLevel',
-                        onChanged: (value) {
-                          setState(() {
-                            _focusLevel = value.toInt();
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('勉強記録を追加'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: '単語',
+                  items: ['単語', '文法', '英文解釈', '過去問']
+                      .map((genre) => DropdownMenuItem(
+                            value: genre,
+                            child: Text(genre),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedGenre = value!;
+                    });
                   },
-                  child: const Text('キャンセル'),
+                  decoration: const InputDecoration(labelText: 'ジャンル'),
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    await _saveStudyRecord();
-                    Navigator.pop(context);
-                  },
-                  child: const Text('保存'),
+                TextField(
+                  controller: _contentController,
+                  decoration: const InputDecoration(labelText: 'どんなことを学びましたか？'),
+                  maxLines: 4,
                 ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('集中度'),
+                    Slider(
+                      value: _focusLevel.toDouble(),
+                      min: 1,
+                      max: 5,
+                      divisions: 4,
+                      label: '$_focusLevel',
+                      onChanged: (value) {
+                        setState(() {
+                          _focusLevel = value.toInt();
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                Text(
+                    '勉強時間: ${_studyTimeInMinutes ~/ 60} 時間 ${_studyTimeInMinutes % 60} 分'),
               ],
-            );
-          },
-        );
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await _saveStudyRecord();
+                  Navigator.pop(context);
+                },
+                child: const Text('保存'),
+              ),
+            ],
+          );
+        });
       },
     );
   }
 
-  // 勉強記録を保存
   Future<void> _saveStudyRecord() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -258,18 +250,19 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
       await userRecord.set({
         'genre': _selectedGenre,
         'content': _contentController.text,
-        'study_time': _timeController.text,
+        'study_time': _studyTimeInMinutes.toString(), // 分単位で保存
         'focus_level': _focusLevel,
         'timestamp': Timestamp.now(),
       });
 
       // 該当するストリームに記録を反映
-      // ユーザーのコミュニティ名を取得
+      // ユーザーのコミュニティを取得
       final community = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get()
           .then((doc) => doc.data()?['community']);
+
       // ユーザーの目的を取得
       final purpose = await FirebaseFirestore.instance
           .collection('users')
@@ -277,12 +270,6 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
           .get()
           .then((doc) => doc.data()?['purpose']);
 
-      // if (kDebugMode) {
-      //   print(community);
-      //   print(purpose);
-      // }
-
-      // コミュニティのストリームに記録を保存
       final streamRecord = FirebaseFirestore.instance
           .collection('communities')
           .doc(purpose)
@@ -293,7 +280,7 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
           .collection('posts')
           .doc();
 
-      final name = await FirebaseFirestore.instance
+      final userName = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get()
@@ -301,7 +288,7 @@ class _StudyRecordPageState extends State<StudyRecordPage> {
 
       await streamRecord.set({
         'user_id': user.uid,
-        'user_name': name,
+        'user_name': userName,
         'content': _contentController.text,
         'focus_level': _focusLevel,
         'timestamp': Timestamp.now(),
