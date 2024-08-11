@@ -183,7 +183,7 @@ class CommunityHomePage extends StatelessWidget {
                                 //   print(
                                 //       'Error loading posts for stream $streamId: ${postSnapshot.error}');
                                 // }
-                                return Text('Error loading posts');
+                                return const Text('Error loading posts');
                               }
                               if (!postSnapshot.hasData ||
                                   postSnapshot.data!.docs.isEmpty) {
