@@ -139,7 +139,7 @@ class CommunityHomePage extends StatelessWidget {
                 child: Icon(Icons.person),
               ),
               title: Text('メンバー $index'), // メンバーの名前を表示
-              subtitle: Text('member@example.com'), // メンバーのメールアドレスを表示
+              subtitle: const Text('member@example.com'), // メンバーのメールアドレスを表示
             );
           },
         );
