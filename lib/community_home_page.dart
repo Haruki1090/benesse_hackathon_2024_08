@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 class CommunityHomePage extends StatelessWidget {
   const CommunityHomePage({super.key});
 
-  Future<String?> _getCommunityName() async {
+  Future<Map<String, String?>> _getCommunityData() async {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
@@ -18,25 +18,32 @@ class CommunityHomePage extends StatelessWidget {
           .get();
 
       if (doc.exists) {
-        return doc.data()?['community'] as String?;
+        return {
+          'community': doc.data()?['community'] as String?,
+          'purpose': doc.data()?['purpose'] as String?,
+        };
       }
     }
-    return null;
+    return {
+      'community': null,
+      'purpose': null,
+    };
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: FutureBuilder<String?>(
-          future: _getCommunityName(),
+        title: FutureBuilder<Map<String, String?>>(
+          future: _getCommunityData(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Text('Loading...');
-            } else if (snapshot.hasError) {
+            } else if (snapshot.hasError || snapshot.data == null) {
               return const Text('Error');
-            } else if (snapshot.hasData && snapshot.data != null) {
-              return Text(snapshot.data!);
+            } else if (snapshot.hasData &&
+                snapshot.data?['community'] != null) {
+              return Text(snapshot.data!['community']!);
             } else {
               return const Text('No Community');
             }
@@ -46,7 +53,6 @@ class CommunityHomePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.account_circle),
             onPressed: () {
-              // アカウント設定やログアウトボタンを表示
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -76,98 +82,187 @@ class CommunityHomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // メンバーリストボタン
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () {
-                  _showMemberList(context);
-                },
-                child: const Text('メンバーリスト', style: TextStyle(fontSize: 16)),
-              ),
-            ),
-          ),
-          // 企画ボード
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text('企画ボード',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+      body: FutureBuilder<Map<String, String?>>(
+        future: _getCommunityData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError || snapshot.data == null) {
+            return const Center(child: Text('Error loading community.'));
+          } else if (snapshot.data?['community'] == null ||
+              snapshot.data?['purpose'] == null) {
+            return const Center(child: Text('No community found.'));
+          } else {
+            final community = snapshot.data!['community']!;
+            final purpose = snapshot.data!['purpose']!;
+
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () {
+                        _showMemberList(context, purpose, community);
+                      },
+                      child:
+                          const Text('メンバーリスト', style: TextStyle(fontSize: 16)),
+                    ),
                   ),
-                  const Divider(),
-                  ListTile(
-                    title: const Text('今週金曜日午後8:00からオンライン単語テストを開催します'),
-                    subtitle: const Text('参加表明: 3名、コメント: 5件'),
-                    onTap: () {
-                      // イベント詳細ページに遷移
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text('企画ボード',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                        ),
+                        const Divider(),
+                        ListTile(
+                          title: const Text('今週金曜日午後8:00からオンライン単語テストを開催します'),
+                          subtitle: const Text('参加表明: 3名、コメント: 5件'),
+                          onTap: () {
+                            // イベント詳細ページに遷移
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(thickness: 2),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('communities')
+                        .doc(purpose)
+                        .collection('community_list')
+                        .doc(community)
+                        .collection('study_streams')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final streams = [
+                        '単語',
+                        '文法',
+                        '英文解釈',
+                        '過去問',
+                      ];
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(8.0),
+                        itemCount: streams.length,
+                        itemBuilder: (context, index) {
+                          final streamId = streams[index];
+                          // if (kDebugMode) {
+                          //   print('Stream ID: $streamId');
+                          // }
+                          return StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collection('communities')
+                                .doc(purpose)
+                                .collection('community_list')
+                                .doc(community)
+                                .collection('study_streams')
+                                .doc(streamId)
+                                .collection('posts')
+                                .orderBy('timestamp', descending: true)
+                                .limit(1)
+                                .snapshots(),
+                            builder: (context, postSnapshot) {
+                              if (postSnapshot.hasError) {
+                                // if (kDebugMode) {
+                                //   print(
+                                //       'Error loading posts for stream $streamId: ${postSnapshot.error}');
+                                // }
+                                return Text('Error loading posts');
+                              }
+                              if (!postSnapshot.hasData ||
+                                  postSnapshot.data!.docs.isEmpty) {
+                                // if (kDebugMode) {
+                                //   print(purpose);
+                                //   print(community);
+                                //   print('No posts found for stream: $streamId');
+                                // }
+                                return _buildStreamCard(
+                                  context,
+                                  streamId,
+                                  'まだ投稿はありません',
+                                  purpose,
+                                  community,
+                                  streamId,
+                                );
+                              } else {
+                                final latestPost =
+                                    postSnapshot.data!.docs.first;
+                                final lastPostedUser =
+                                    latestPost['user_name'] ?? '匿名';
+
+                                // if (kDebugMode) {
+                                //   print(
+                                //       'Last post user for stream $streamId: $lastPostedUser');
+                                // }
+                                return _buildStreamCard(
+                                  context,
+                                  streamId,
+                                  '最後の投稿: $lastPostedUser',
+                                  purpose,
+                                  community,
+                                  streamId,
+                                );
+                              }
+                            },
+                          );
+                        },
+                      );
                     },
                   ),
-                  // 他の企画ボードのアイテムを追加
-                ],
-              ),
-            ),
-          ),
-          const Divider(thickness: 2),
-          // スタディストリーム
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(8.0),
-              children: [
-                _buildStreamCard(
-                  context,
-                  '単語ストリーム',
-                  '最後の投稿: ユーザーA',
-                  'word_stream',
-                ),
-                _buildStreamCard(
-                  context,
-                  '文法ストリーム',
-                  '最後の投稿: ユーザーB',
-                  'grammar_stream',
-                ),
-                _buildStreamCard(
-                  context,
-                  '英文解釈ストリーム',
-                  '最後の投稿: ユーザーC',
-                  'interpretation_stream',
-                ),
-                _buildStreamCard(
-                  context,
-                  '過去問ストリーム',
-                  '最後の投稿: ユーザーD',
-                  'past_question_stream',
                 ),
               ],
-            ),
-          ),
-        ],
+            );
+          }
+        },
       ),
     );
   }
 
-  void _showMemberList(BuildContext context) {
+  void _showMemberList(BuildContext context, String purpose, String community) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return ListView.builder(
-          itemCount: 10, // メンバー数に応じて変更
-          itemBuilder: (context, index) {
-            return ListTile(
-              leading: const CircleAvatar(
-                child: Icon(Icons.person),
-              ),
-              title: Text('メンバー $index'), // メンバーの名前を表示
-              subtitle: const Text('member@example.com'), // メンバーのメールアドレスを表示
+        return FutureBuilder<QuerySnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('communities')
+              .doc(purpose)
+              .collection('community_list')
+              .doc(community)
+              .collection('members')
+              .get(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final members = snapshot.data!.docs;
+            return ListView.builder(
+              itemCount: members.length,
+              itemBuilder: (context, index) {
+                final member = members[index];
+                return ListTile(
+                  leading: const CircleAvatar(
+                    child: Icon(Icons.person),
+                  ),
+                  title: Text(member['name'] ?? 'Unknown'),
+                  subtitle: Text(member['email'] ?? 'No Email'),
+                );
+              },
             );
           },
         );
@@ -175,8 +270,14 @@ class CommunityHomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildStreamCard(BuildContext context, String streamName,
-      String lastPostedUser, String streamId) {
+  Widget _buildStreamCard(
+    BuildContext context,
+    String streamName,
+    String lastPostedUser,
+    String purpose,
+    String community,
+    String streamId,
+  ) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: ListTile(
@@ -184,12 +285,14 @@ class CommunityHomePage extends StatelessWidget {
         subtitle: Text(lastPostedUser),
         trailing: const Icon(Icons.arrow_forward),
         onTap: () {
-          // 各ストリームのタイムラインページに遷移
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => StreamTimelinePage(
-                  streamName: streamName, streamId: streamId),
+                streamName: streamName,
+                purpose: purpose,
+                community: community,
+              ),
             ),
           );
         },
@@ -200,10 +303,15 @@ class CommunityHomePage extends StatelessWidget {
 
 class StreamTimelinePage extends StatelessWidget {
   final String streamName;
-  final String streamId;
+  final String purpose;
+  final String community;
 
-  const StreamTimelinePage(
-      {super.key, required this.streamName, required this.streamId});
+  const StreamTimelinePage({
+    super.key,
+    required this.streamName,
+    required this.purpose,
+    required this.community,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -211,16 +319,37 @@ class StreamTimelinePage extends StatelessWidget {
       appBar: AppBar(
         title: Text(streamName),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(8.0),
-        itemCount: 20, // 仮の投稿数
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: const CircleAvatar(
-              child: Icon(Icons.person),
-            ),
-            title: Text('ユーザー $index'),
-            subtitle: const Text('投稿内容の詳細がここに表示されます'),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('communities')
+            .doc(purpose)
+            .collection('community_list')
+            .doc(community)
+            .collection('study_streams')
+            .doc(streamName)
+            .collection('posts')
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final posts = snapshot.data!.docs;
+
+          return ListView.builder(
+            itemCount: posts.length,
+            itemBuilder: (context, index) {
+              final post = posts[index];
+              return ListTile(
+                leading: const CircleAvatar(
+                  child: Icon(Icons.person),
+                ),
+                title: Text(post['user_name'] ?? '匿名'),
+                subtitle: Text(post['content']),
+                trailing: Text('集中度: ${post['focus_level']}/5'),
+              );
+            },
           );
         },
       ),
