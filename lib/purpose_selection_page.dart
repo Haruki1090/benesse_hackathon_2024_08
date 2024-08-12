@@ -10,7 +10,12 @@ class PurposeSelectionPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('何を勉強する？'),
+        title: const Text('何を勉強する？',
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.indigo[300],
       ),
       body: ListView(
         children: [
