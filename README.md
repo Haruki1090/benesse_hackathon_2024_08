@@ -2,6 +2,8 @@
 ```
 自己管理を他に任せるコミュニティー協力型サービス（Uni-Com）
 ```
+<img alt="my skills" src="https://skillicons.dev/icons?theme=light&perline=8&i=flutter,firebase,dart,figma" />  
+
 # 開発環境
 |環境|概要|
 |-|-|
