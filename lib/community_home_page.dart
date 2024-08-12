@@ -2,6 +2,7 @@
 
 import 'package:benesse_hackathon_2024_08/auth_gate.dart';
 import 'package:benesse_hackathon_2024_08/event_detail_page.dart';
+import 'package:benesse_hackathon_2024_08/ranking_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -152,28 +153,47 @@ class CommunityHomePage extends StatelessWidget {
 
                             return Column(
                               children: events.map((event) {
-                                // if (kDebugMode) {
-                                //   print(event.id);
-                                //   print(event['title']);
-                                // }
                                 final eventId = event.id;
-                                return ListTile(
-                                  title: Text(event['title']),
-                                  subtitle: Text(
-                                    '参加表明: ${event['participants']}名, コメント: ${event['comments_count'] ?? 0}件',
-                                  ),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => EventDetailPage(
-                                          community: community,
-                                          eventId: eventId,
-                                          purpose: purpose,
-                                        ),
+                                final title = event['title'];
+
+                                return Column(
+                                  children: [
+                                    ListTile(
+                                      title: Text(title),
+                                      subtitle: Text(
+                                        '参加表明: ${event['participants']}名, コメント: ${event['comments_count'] ?? 0}件',
                                       ),
-                                    );
-                                  },
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                EventDetailPage(
+                                              community: community,
+                                              eventId: eventId,
+                                              purpose: purpose,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    ListTile(
+                                      title: Text('$title ランキング'),
+                                      subtitle: const Text('ランキングを確認しよう！'),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => RankingPage(
+                                              community: community,
+                                              eventId: eventId,
+                                              purpose: purpose,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 );
                               }).toList(),
                             );
