@@ -250,7 +250,10 @@ class QuizResultPage extends StatelessWidget {
                 ),
                 child: const Text(
                   'ランキングページに戻る',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
               ),
             ),
