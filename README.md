@@ -1,6 +1,32 @@
 # benesse_hackathon_2024_08
-
+```
 自己管理を他に任せるコミュニティー協力型サービス（Uni-Com）
+```
+# 利用パッケージ
+## Dependencies
+
+| Package | Version |
+|---------|---------|
+| flutter | sdk: flutter |
+| cupertino_icons | ^1.0.6 |
+| firebase_core | ^3.3.0 |
+| firebase_auth | ^5.1.4 |
+| cloud_firestore | ^5.2.1 |
+| riverpod | ^2.5.1 |
+| freezed_annotation | ^2.4.4 |
+| freezed | ^2.5.2 |
+| flutter_riverpod | ^2.5.1 |
+| json_annotation | ^4.9.0 |
+| intl | ^0.19.0 |
+
+## Dev Dependencies
+
+| Package | Version |
+|---------|---------|
+| flutter_test | sdk: flutter |
+| flutter_lints | ^3.0.0 |
+| json_serializable | ^6.8.0 |
+| build_runner | ^2.4.9 |
 
 # スクリーンショットと各機能説明
 |スクリーンショット|機能概要|
