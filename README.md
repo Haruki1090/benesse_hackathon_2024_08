@@ -72,27 +72,14 @@
 |<img src="https://github.com/user-attachments/assets/c9b2a5fa-92a4-4efd-a52d-e3c1be8b7e8f" width="300" alt="Simulator Screenshot - iPhone 15 Pro - 2024-08-12 at 12 50 43">|答え合わせ|
 |<img src="https://github.com/user-attachments/assets/527f03cd-2a47-4bfd-b648-f0a3e5835c2d" width="300" alt="Simulator Screenshot - iPhone 15 Pro - 2024-08-12 at 12 50 54">|反映されている|
 
+# 開発で工夫した点
+- Firebaseをふんだんに利用したバックエンド設計
+- イミュータブルなクラスを設計し、バグの軽減に挑戦した
+- UIはシンプルにデザインし、視覚的負荷の内容に心がけた
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# 実装+企画で工夫したこと
+- 勉強内容投稿での時間において、`自己管理`の面では重要だが`ストリーム`（他のユーザーが見れるところ）では悪い効果を生んでしまう可能性もあるためあえて表示しなかった。  
+- 努力した量を重要なパラメーターとしておいているため、`単語テスト`では一回の結果でなく何度も挑戦することでポイントが貯まるように（実装）した。  
 
 # Firebaseセットアップ
 ```
