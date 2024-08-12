@@ -1,7 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:benesse_hackathon_2024_08/account_settings_page.dart';
 import 'package:benesse_hackathon_2024_08/auth_gate.dart';
 import 'package:benesse_hackathon_2024_08/event_detail_page.dart';
+import 'package:benesse_hackathon_2024_08/member_detail_page.dart';
 import 'package:benesse_hackathon_2024_08/ranking_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -65,7 +67,14 @@ class CommunityHomePage extends StatelessWidget {
                     children: [
                       ListTile(
                         title: const Text('Account Settings'),
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AccountSettingsPage(),
+                            ),
+                          );
+                        },
                       ),
                       ListTile(
                         title: const Text('Logout'),
@@ -323,12 +332,56 @@ class CommunityHomePage extends StatelessWidget {
               itemCount: members.length,
               itemBuilder: (context, index) {
                 final member = members[index];
+                final memberName = member['name'] ?? 'Unknown';
+                final memberEmail = member['email'] ?? 'No Email';
+                final userId = member.id;
+
                 return ListTile(
                   leading: const CircleAvatar(
                     child: Icon(Icons.person),
                   ),
-                  title: Text(member['name'] ?? 'Unknown'),
-                  subtitle: Text(member['email'] ?? 'No Email'),
+                  title: Text(memberName),
+                  subtitle: Text(memberEmail),
+                  onTap: () async {
+                    // users コレクションから追加情報を取得
+                    final userDoc = await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(userId)
+                        .get();
+
+                    if (userDoc.exists) {
+                      final userData = userDoc.data()!;
+                      final memberUniversity =
+                          userData['university'] ?? 'No University';
+                      final memberFaculty = userData['faculty'] ?? 'No Faculty';
+                      final memberPurpose = userData['purpose'] ?? 'No Purpose';
+                      final memberGoal = userData['goal'] ?? 'No Goal';
+                      final memberGrade = userData['grade'] ?? 'No Grade';
+                      final memberEffort = userData['effort'] ?? 'No Effort';
+
+                      // 詳細ページにデータを渡してナビゲート
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MemberDetailPage(
+                            name: memberName,
+                            email: memberEmail,
+                            university: memberUniversity,
+                            faculty: memberFaculty,
+                            purpose: memberPurpose,
+                            goal: memberGoal,
+                            grade: memberGrade,
+                            Effort: memberEffort,
+                          ),
+                        ),
+                      );
+                    } else {
+                      // ユーザーデータが見つからなかった場合のエラーハンドリング
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('ユーザーデータが見つかりません')),
+                      );
+                    }
+                  },
                 );
               },
             );
