@@ -145,8 +145,12 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('アカウント登録'),
-        backgroundColor: Colors.blueGrey, //todo:色変更
+        title: const Text('アカウント登録',
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.indigo[300],
       ),
       body: Stack(
         children: [
@@ -156,13 +160,6 @@ class _SignUpPageState extends State<SignUpPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'サインアップ',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                   const SizedBox(height: 20),
                   _buildTextField(
                     controller: emailController,
