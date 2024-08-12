@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:benesse_hackathon_2024_08/auth_gate.dart';
+import 'package:benesse_hackathon_2024_08/event_detail_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -125,11 +126,57 @@ class CommunityHomePage extends StatelessWidget {
                                   fontSize: 18, fontWeight: FontWeight.bold)),
                         ),
                         const Divider(),
-                        ListTile(
-                          title: const Text('今週金曜日午後8:00からオンライン単語テストを開催します'),
-                          subtitle: const Text('参加表明: 3名、コメント: 5件'),
-                          onTap: () {
-                            // イベント詳細ページに遷移
+                        StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('communities')
+                              .doc(purpose)
+                              .collection('community_list')
+                              .doc(community)
+                              .collection('events')
+                              .orderBy('date_time', descending: false)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+
+                            final events = snapshot.data!.docs;
+
+                            if (events.isEmpty) {
+                              return const ListTile(
+                                title: Text('現在、予定されているイベントはありません。'),
+                              );
+                            }
+
+                            return Column(
+                              children: events.map((event) {
+                                // if (kDebugMode) {
+                                //   print(event.id);
+                                //   print(event['title']);
+                                // }
+                                final eventId = event.id;
+                                return ListTile(
+                                  title: Text(event['title']),
+                                  subtitle: Text(
+                                    '参加表明: ${event['participants']}名, コメント: ${event['comments_count'] ?? 0}件',
+                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => EventDetailPage(
+                                          community: community,
+                                          eventId: eventId,
+                                          purpose: purpose,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              }).toList(),
+                            );
                           },
                         ),
                       ],
