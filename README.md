@@ -2,6 +2,18 @@
 ```
 自己管理を他に任せるコミュニティー協力型サービス（Uni-Com）
 ```
+# 開発環境
+|環境|概要|
+|-|-|
+|言語|Dart|
+|フレームワーク|Flutter|
+|対象|iOS, Android|
+|IDE|Android Studio|
+|バックエンド|Firebase|
+|認証|Firebase Authentication|
+|データベース| Firebase Firestore|
+|イミュータブルクラス|Freezed|
+
 # 利用パッケージ
 ## Dependencies
 
